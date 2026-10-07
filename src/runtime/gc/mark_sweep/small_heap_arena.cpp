@@ -2,6 +2,7 @@
 
 #if LEANCLR_GC_MARK_SWEEP
 
+#include <map>
 #include "gc/gc_finalizer.h"
 #include "utils/mem_op.h"
 
@@ -9,6 +10,22 @@ namespace leanclr
 {
 namespace gc
 {
+
+// Index live arenas by address; retain the arena's alignment and allocation-bit
+// checks. This follows the existing single-threaded heap ownership contract.
+static std::map<uintptr_t, SmallHeapArena*> s_arena_address_index;
+
+bool is_allocated_small_heap_block(const void* ptr)
+{
+    const uintptr_t address = reinterpret_cast<uintptr_t>(ptr);
+    auto candidate = s_arena_address_index.upper_bound(address);
+    if (candidate == s_arena_address_index.begin())
+    {
+        return false;
+    }
+    --candidate;
+    return candidate->second->contains_allocated_block(ptr);
+}
 
 #if LEANCLR_GC_DEBUG
 static bool is_zeroed(void* block, size_t size)
@@ -96,6 +113,7 @@ void SmallHeapArena::rebuild_free_list()
 
 void SmallHeapArena::release_data()
 {
+    s_arena_address_index.erase(reinterpret_cast<uintptr_t>(_data));
     alloc::GeneralAllocation::aligned_free(_data);
     _data = nullptr;
     _block_count = 0;
@@ -113,6 +131,7 @@ SmallHeapArena::SmallHeapArena(void* arena_data, size_t arena_size, size_t block
     assert(_block_count > 0);
     assert(_block_count <= kMaxBlockCount);
     rebuild_free_list();
+    s_arena_address_index.emplace(reinterpret_cast<uintptr_t>(_data), this);
 }
 
 SmallHeapArena::~SmallHeapArena()

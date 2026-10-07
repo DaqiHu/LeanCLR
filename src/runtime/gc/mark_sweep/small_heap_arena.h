@@ -21,6 +21,8 @@ namespace leanclr
 namespace gc
 {
 
+bool is_allocated_small_heap_block(const void* ptr);
+
 struct FreeBlockHeader
 {
     FreeBlockHeader* next_free;

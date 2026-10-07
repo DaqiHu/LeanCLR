@@ -232,16 +232,7 @@ bool MarkSweepHeap::is_allocated_object(const vm::RtObject* obj)
         return obj->klass != nullptr;
     }
 
-    for (size_t i = 0; i < kSizeClassPoolCount; ++i)
-    {
-        SizeClassPool* pool = s_size_class_pools[i];
-        if (pool != nullptr && pool->contains_allocated_block(ptr))
-        {
-            return obj->klass != nullptr;
-        }
-    }
-
-    return false;
+    return is_allocated_small_heap_block(ptr) && obj->klass != nullptr;
 }
 
 vm::RtObject* allocate_object_impl(const metadata::RtClass* klass, size_t size, const GcAllocSite* site)

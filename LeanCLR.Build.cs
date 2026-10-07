@@ -33,7 +33,7 @@ public class LeanCLR : ModuleRules
 
 		PublicDefinitions.Add("LEANCLR_GC_MARK_SWEEP=1");
 
-		PublicDefinitions.Add("LEANCLR_GC_DEBUG=1");
+		PublicDefinitions.Add("LEANCLR_GC_DEBUG=0");
 
 		PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "src", "runtime"));
 
